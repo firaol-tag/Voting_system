@@ -1,62 +1,97 @@
-const db = require("../../config/db"); // your MySQL or other db connection
+const db = require("../../config/db");
 
 module.exports = {
   addVote: (req, res) => {
-    const { nominee_id, device_id, email } = req.body;
+    const { nominee_id, email, device_id } = req.body;
 
-    // Check if device has already voted
-    const checkQuery = "SELECT * FROM vote WHERE device_id = ?";
-    db.query(checkQuery, [device_id], (err, results) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ success: false, message: "DB error" });
-      }
+    if (!nominee_id || !email || !device_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
 
-      if (results.length > 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "This device has already voted" });
-      }
+    // Check voting status
+    db.query(
+      "SELECT active FROM voting_status WHERE id=1",
+      (err, statusRes) => {
+        if (err) return res.status(500).json({ success: false });
 
-      // Optional: check email if you want to track nominators
-      let nominator_id = null;
-      if (email) {
-        const nominatorQuery = "SELECT id FROM nominator WHERE email = ?";
-        db.query(nominatorQuery, [email], (err2, nominatorResult) => {
-          if (err2) return res.status(500).json({ success: false });
-          if (nominatorResult.length > 0) nominator_id = nominatorResult[0].id;
-          insertVote();
-        });
-      } else {
-        insertVote();
-      }
+        if (!statusRes[0].active) {
+          return res.status(403).json({
+            success: false,
+            message: "Voting is closed!",
+          });
+        }
 
-      function insertVote() {
-        const insertQuery =
-          "INSERT INTO vote (nominee_id, nominator_id, device_id) VALUES (?, ?, ?)";
-        db.query(insertQuery, [nominee_id, nominator_id, device_id], (err3) => {
-          if (err3) {
-            console.log(err3);
-            return res.status(500).json({ success: false, message: "Vote failed" });
+        // Check email/device voting
+        db.query(
+          "SELECT * FROM votes WHERE email=? OR device_id=?",
+          [email, device_id],
+          (err, existing) => {
+            if (err) return res.status(500).json({ success: false });
+
+            if (existing.length > 0) {
+              return res.status(400).json({
+                success: false,
+                message: "You have already voted!",
+              });
+            }
+
+            // Insert vote
+            db.query(
+              "INSERT INTO votes (nominee_id, email, device_id) VALUES (?, ?, ?)",
+              [nominee_id, email, device_id],
+              (err) => {
+                if (err) return res.status(500).json({ success: false });
+
+                // 🔥 Emit real-time vote update
+                global.io.emit("voteUpdate");
+
+                res.json({
+                  success: true,
+                  message: "Vote recorded successfully!",
+                });
+              }
+            );
           }
-          return res.json({ success: true, message: "Vote recorded!" });
-        });
+        );
       }
-    });
+    );
   },
 
   getVotes: (req, res) => {
-    const query = "SELECT nominee_id, COUNT(*) as vote_count FROM vote GROUP BY nominee_id";
-    db.query(query, (err, results) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ success: false, message: "DB error" });
-      }
-      const votes = {};
-      results.forEach((row) => {
-        votes[row.nominee_id] = row.vote_count;
-      });
-      return res.json({ success: true, votes });
+    const sql = `
+      SELECT nominee_id, COUNT(*) AS totalVotes 
+      FROM votes 
+      GROUP BY nominee_id
+    `;
+    db.query(sql, (err, results) => {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, data: results });
     });
+  },
+
+  getStatus: (req, res) => {
+    db.query("SELECT active FROM voting_status WHERE id=1", (err, result) => {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, active: result[0].active });
+    });
+  },
+
+  toggleStatus: (req, res) => {
+    const { active } = req.body;
+    db.query(
+      "UPDATE voting_status SET active=? WHERE id=1",
+      [active],
+      (err) => {
+        if (err) return res.status(500).json({ success: false });
+
+        // 🔥 Emit voting status change to all clients
+        global.io.emit("votingStatusChanged", { active });
+
+        res.json({ success: true, active });
+      }
+    );
   },
 };

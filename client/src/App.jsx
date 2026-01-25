@@ -33,7 +33,7 @@ if (!deviceId) {
     <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/vote" element={<Vote />} />
+        <Route path="/vote/:id" element={<Vote />} />
          <Route
           path="/dashboard"
           element={<Dashboard nominees={nominees} setNominees={setNominees} />}

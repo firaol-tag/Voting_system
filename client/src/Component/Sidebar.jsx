@@ -25,15 +25,6 @@ const Sidebar = ({ setView, votingActive, setVotingActive }) => {
       >
         Update Nominee
       </button>
-
-      <button
-        onClick={() => setVotingActive(!votingActive)}
-        className={`w-full text-left px-4 py-2 mt-auto rounded ${
-          votingActive ? "bg-red-500 text-white" : "bg-green-500 text-white"
-        } hover:opacity-90 transition`}
-      >
-        {votingActive ? "Stop Voting" : "Start Voting"}
-      </button>
     </div>
   );
 };

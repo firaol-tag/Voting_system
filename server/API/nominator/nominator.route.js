@@ -1,2 +1,2 @@
-const nominatorRouter = require('express').Router();
+const nominatorRouter = require("express").Router();
 module.exports = nominatorRouter;
