@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 import NomineeCard from "../Component/NomineeCard";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3270");
+const socket = io("http://192.168.101.181:3270");
 
 const Home = () => {
   const [nomineesData, setNomineesData] = useState([]);
@@ -15,26 +15,51 @@ const Home = () => {
 
   // Fetch nominees
   const fetchNominees = async () => {
-    const res = await axios.get("http://localhost:3270/api/nominee/get");
-    setNomineesData(res.data.data);
+    try {
+      const res = await axios.get("http://192.168.101.181:3270/api/nominee/get");
+      setNomineesData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching nominees:", error);
+    }
   };
 
   // Fetch votes and voting status
   const fetchVotesAndStatus = async () => {
-    const resVotes = await axios.get("http://localhost:3270/api/vote");
-    const voteMap = {};
-    resVotes.data.data.forEach((v) => (voteMap[v.nominee_id] = v.totalVotes));
-    setVotes(voteMap);
+    try {
+      const resVotes = await axios.get("http://192.168.101.181:3270/api/vote");
+      const voteMap = {};
+      resVotes.data.data.forEach((v) => (voteMap[v.nominee_id] = v.totalVotes));
+      setVotes(voteMap);
 
-    const resStatus = await axios.get("http://localhost:3270/api/vote/status");
-    setIsVotingActive(resStatus.data.active);
+      const resStatus = await axios.get("http://192.168.101.181:3270/api/vote/status");
+      setIsVotingActive(resStatus.data.active);
+    } catch (error) {
+      console.error("Error fetching votes or status:", error);
+    }
+  };
+  const fetchVoteWithDeviceId = async () => {
+    try {
+      const deviceId = localStorage.getItem("voterDevice");
+      if (deviceId) {
+        const res = await axios.get(`http://192.168.101.181:3270/api/vote/device/${deviceId}`);
+        setHasVoted(res.data.hasVoted);
+      }
+    } catch (error) {
+      console.error("Error fetching vote with device ID:", error);
+    }
   };
 
-  // Check if user has voted (localStorage)
+  // Check if user has voted (localStorage only)
   useEffect(() => {
     const email = localStorage.getItem("voterEmail");
     const deviceId = localStorage.getItem("voterDevice");
-    if (email || deviceId) setHasVoted(true);
+
+    // Only set hasVoted if BOTH email && deviceId exist
+    if (email && deviceId) {
+      setHasVoted(true);
+    } else {
+      setHasVoted(false);
+    }
   }, []);
 
   // Initial fetch & socket listeners
@@ -52,8 +77,14 @@ const Home = () => {
   }, []);
 
   const handleVote = (id) => {
-    if (!isVotingActive) return alert("Voting is stopped by the admin.");
-    if (hasVoted) return alert("You have already voted.");
+    if (!isVotingActive) {
+      alert("Voting is stopped by the admin.");
+      return;
+    }
+    if (hasVoted) {
+      alert("You have already voted.");
+      return;
+    }
 
     navigate(`/vote/${id}`);
   };
@@ -64,6 +95,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-24 px-6">
+      <div className="text-center font-extrabold text-white text-3xl md:text-4xl lg:text-5xl mb-16 mt-6">
+        <h2>Best Dressing Nominee</h2>
+      </div>
+
       <div className="max-w-7xl mx-auto">
         {!isVotingActive && (
           <div className="text-center mb-6 text-red-600 font-bold">

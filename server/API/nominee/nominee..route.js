@@ -2,6 +2,7 @@
 const { addNominee, getNominees } = require('./nominee.controller');
 const multer = require('multer');
 const path = require('path');
+const { updateNominee } = require('./nominee..service');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -17,4 +18,5 @@ const upload = multer({ storage });
 const nomineeRouter = require('express').Router();
 nomineeRouter.post("/add", upload.single('image'), addNominee)
 nomineeRouter.get("/get",getNominees)
+nomineeRouter.put("/update/:id", upload.single('image'),updateNominee)
 module.exports = nomineeRouter;

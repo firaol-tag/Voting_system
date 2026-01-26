@@ -5,6 +5,8 @@ import React from "react";
 import Navbar from "./Component/Navbar";
 import Dashboard from "./Pages/Dashboard";
 import { useState } from "react";
+import Login from "./Pages/Login";
+import { useAuth } from "./Component/ContextAPI/Auth";
 function App() {
    const [nominees, setNominees] = useState([
     {
@@ -20,6 +22,7 @@ function App() {
       image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
     },
   ]);
+  const { user } = useAuth();
   let deviceId = localStorage.getItem("deviceId");
 if (!deviceId) {
   const deviceId =
@@ -27,11 +30,14 @@ if (!deviceId) {
   Math.random().toString(36).substring(2) + Date.now();
   localStorage.setItem("deviceId", deviceId);
 }
-
+// if (!user && window.location.pathname === "/dashboard") {
+//   window.location.href = "/login";
+// }
   return (
     <>
     <Navbar />
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
         <Route path="/vote/:id" element={<Vote />} />
          <Route

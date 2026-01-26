@@ -11,21 +11,37 @@ const Dashboard = () => {
   // Nominee form state
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState(null);
 
   const [nomineesData, setNomineesData] = useState([]);
   const [votes, setVotes] = useState({});
-
+  //add admin
+  const handleAddAdmin = async ({name, email, password}) => {
+    try {
+      await API.post("/api/user/add", { name, email, password });
+      alert("Admin added successfully");
+    } catch (err) {
+      alert("Error adding admin");
+      console.error(err);
+    }
+  };
+  // Fetch admins
+  const fetchAdmins = async () => {
+    try {
+      const res = await API.get("/api/admin/get");
+    } catch (err) {
+      console.error(err);
+    }
+  };
   // Fetch nominees
   const fetchNominees = async () => {
     try {
       const res = await API.get("/api/nominee/get");
       setNomineesData(res.data.data);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
-
   // Fetch votes
   const fetchVotes = async () => {
     try {
@@ -36,20 +52,18 @@ const Dashboard = () => {
       });
       setVotes(map);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
-
   // Fetch voting status
   const fetchVotingStatus = async () => {
     try {
       const res = await API.get("/api/voting/status");
       setVotingActive(res.data.active);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
-
   // Add nominee
   const handleAddNominee = async (e) => {
     e.preventDefault();
@@ -65,16 +79,15 @@ const Dashboard = () => {
       alert("Nominee added successfully");
       setName("");
       setDepartment("");
-      setImage("");
+      setImage(null);
       setView("dashboard");
       fetchNominees();
     } catch (err) {
       alert("Error adding nominee");
-      console.log(err);
+      console.error(err);
     }
   };
-
-  // Toggle voting status
+  // Toggle voting
   const toggleVoting = async () => {
     try {
       const res = await API.post("/api/vote/status", {
@@ -82,26 +95,26 @@ const Dashboard = () => {
       });
       setVotingActive(res.data.active);
 
-      // Emit WebSocket event for real-time update
+      // Emit WebSocket event
       socket.emit("votingStatusChanged", { active: res.data.active });
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
-
   // Ranking logic
   const rankedNominees = [...nomineesData].sort(
     (a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)
   );
-
   // Initial fetch & socket listeners
   useEffect(() => {
     fetchNominees();
     fetchVotes();
     fetchVotingStatus();
-
+    fetchAdmins
     socket.on("voteUpdate", fetchVotes);
-    socket.on("votingStatusChanged", (data) => setVotingActive(data.active));
+    socket.on("votingStatusChanged", (data) =>
+      setVotingActive(data.active)
+    );
 
     return () => {
       socket.off("voteUpdate");
@@ -156,7 +169,7 @@ const Dashboard = () => {
                     }`}
                   >
                     <img
-                      src={`http://localhost:3270${nom.photo}`}
+                      src={`${API.defaults.baseURL}${nom.photo}`} // <-- dynamic IP
                       alt={nom.name}
                       className="w-full h-40 object-contain rounded mb-2"
                     />
@@ -176,7 +189,10 @@ const Dashboard = () => {
           {view === "add" && (
             <div>
               <h2 className="text-2xl font-bold mb-4">Add Nominee</h2>
-              <form onSubmit={handleAddNominee} className="space-y-4 max-w-md">
+              <form
+                onSubmit={handleAddNominee}
+                className="space-y-4 max-w-md"
+              >
                 <input
                   type="text"
                   placeholder="Name"
@@ -205,6 +221,87 @@ const Dashboard = () => {
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
                 >
                   Add Nominee
+                </button>
+              </form>
+            </div>
+          )}
+          {/* UPDATE NOMINEE */}
+          {view === "update" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Update Nominee</h2>
+              <form
+                onSubmit={handleAddNominee}
+                className="space-y-4 max-w-md"
+              >
+                <input
+                  type="text"
+                  placeholder="Name"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Department"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  required
+                />
+                <input
+                  type="file"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  onChange={(e) => setImage(e.target.files[0])}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Update Nominee
+                </button>
+              </form>
+            </div>
+          )}
+          {/* ADD ADMIN VIEW */}
+          {view === "addAdmin" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Add Admin</h2>
+              <form
+                onSubmit={handleAddAdmin}
+                className="space-y-4 max-w-md"
+              >
+                <input
+                  type="text"
+                  placeholder="Name"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
+                >
+                  Add Admin
                 </button>
               </form>
             </div>

@@ -1,4 +1,5 @@
 const db = require("../../config/db");
+const { get } = require("./vote.route");
 
 module.exports = {
   addVote: (req, res) => {
@@ -91,6 +92,19 @@ module.exports = {
         global.io.emit("votingStatusChanged", { active });
 
         res.json({ success: true, active });
+      }
+    );
+  },
+  getVoteByDeviceId: (req, res) => {
+    const { deviceId } = req.params;
+    db.query(
+      "SELECT * FROM votes WHERE device_id=?",
+      [deviceId],
+      (err, results) => {
+        if (err) return res.status(500).json({ success: false });
+        console.log("voted");
+        return res.json({ success: true, hasVoted: results.length > 0 });
+
       }
     );
   },
