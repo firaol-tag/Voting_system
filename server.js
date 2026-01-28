@@ -38,8 +38,7 @@ io.on("connection", (socket) => {
 
 app.use("/api/nominee", nomineeRouter);
 app.use("/api/vote", voteRouter);
-app.use("/api/auth", authRouter);
-app.use()
+app.use("/api/user", authRouter);
 const PORT = 3270;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running at http://192.168.101.181:${PORT}`);

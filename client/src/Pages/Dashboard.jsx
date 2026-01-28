@@ -8,123 +8,146 @@ const Dashboard = () => {
   const [view, setView] = useState("dashboard");
   const [votingActive, setVotingActive] = useState(true);
 
-  // Nominee form state
+  // nominee form
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [image, setImage] = useState(null);
+  const [selectedNominee, setSelectedNominee] = useState(null);
 
+  // admin form
+  const [admName, setAdmName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // data
   const [nomineesData, setNomineesData] = useState([]);
   const [votes, setVotes] = useState({});
-  //add admin
-  const handleAddAdmin = async ({name, email, password}) => {
-    try {
-      await API.post("/api/user/add", { name, email, password });
-      alert("Admin added successfully");
-    } catch (err) {
-      alert("Error adding admin");
-      console.error(err);
-    }
-  };
-  // Fetch admins
-  const fetchAdmins = async () => {
-    try {
-      const res = await API.get("/api/admin/get");
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  // Fetch nominees
+  const [admins, setAdmins] = useState([]);
+
+  /* ================= FETCH ================= */
+
   const fetchNominees = async () => {
-    try {
-      const res = await API.get("/api/nominee/get");
-      setNomineesData(res.data.data);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await API.get("/api/nominee/get");
+    setNomineesData(res.data.data || []);
   };
-  // Fetch votes
+
   const fetchVotes = async () => {
-    try {
-      const res = await API.get("/api/vote");
-      const map = {};
-      res.data.data.forEach((v) => {
-        map[v.nominee_id] = v.totalVotes;
-      });
-      setVotes(map);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await API.get("/api/vote");
+    const map = {};
+    (res.data.data || []).forEach(v => {
+      map[v.nominee_id] = v.totalVotes;
+    });
+    setVotes(map);
   };
-  // Fetch voting status
+
   const fetchVotingStatus = async () => {
-    try {
-      const res = await API.get("/api/voting/status");
-      setVotingActive(res.data.active);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await API.get("/api/voting/status");
+    setVotingActive(res.data.active);
   };
-  // Add nominee
+
+  const fetchAdmins = async () => {
+    const res = await API.get("/api/user/get");
+    setAdmins(res.data.data || []);
+  };
+
+  /* ================= ADMIN ================= */
+
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    await API.post("/api/user/register", {
+      admName,
+      email,
+      password,
+    });
+    setAdmName("");
+    setEmail("");
+    setPassword("");
+    fetchAdmins();
+    setView("admins");
+  };
+
+  /* ================= NOMINEE ================= */
+
+  const resetForm = () => {
+    setName("");
+    setDepartment("");
+    setImage(null);
+    setSelectedNominee(null);
+  };
+
   const handleAddNominee = async (e) => {
     e.preventDefault();
-    if (!name || !department || !image) return;
-
     const formData = new FormData();
     formData.append("name", name);
     formData.append("department", department);
     formData.append("image", image);
 
-    try {
-      await API.post("/api/nominee/add", formData);
-      alert("Nominee added successfully");
-      setName("");
-      setDepartment("");
-      setImage(null);
-      setView("dashboard");
-      fetchNominees();
-    } catch (err) {
-      alert("Error adding nominee");
-      console.error(err);
-    }
+    await API.post("/api/nominee/add", formData);
+    resetForm();
+    fetchNominees();
+    setView("dashboard");
   };
-  // Toggle voting
-  const toggleVoting = async () => {
-    try {
-      const res = await API.post("/api/vote/status", {
-        active: !votingActive,
-      });
-      setVotingActive(res.data.active);
 
-      // Emit WebSocket event
-      socket.emit("votingStatusChanged", { active: res.data.active });
-    } catch (err) {
-      console.error(err);
-    }
+  const handleUpdateNominee = async (e) => {
+    e.preventDefault();
+    if (!selectedNominee) return;
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("department", department);
+    if (image) formData.append("image", image);
+
+    await API.put(
+      `/api/nominee/update/${selectedNominee.id}`,
+      formData
+    );
+
+    resetForm();
+    fetchNominees();
+    setView("dashboard");
   };
-  // Ranking logic
-  const rankedNominees = [...nomineesData].sort(
-    (a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)
-  );
-  // Initial fetch & socket listeners
+
+  /* ================= VOTING ================= */
+
+  const toggleVoting = async () => {
+    const res = await API.post("/api/vote/status", {
+      active: !votingActive,
+    });
+    setVotingActive(res.data.active);
+    socket?.emit("votingStatusChanged", { active: res.data.active });
+  };
+
+  /* ================= EFFECTS ================= */
+
   useEffect(() => {
     fetchNominees();
     fetchVotes();
     fetchVotingStatus();
-    fetchAdmins
-    socket.on("voteUpdate", fetchVotes);
-    socket.on("votingStatusChanged", (data) =>
-      setVotingActive(data.active)
-    );
+    fetchAdmins();
+
+    if (socket) {
+      socket.on("voteUpdate", fetchVotes);
+      socket.on("votingStatusChanged", d =>
+        setVotingActive(d.active)
+      );
+    }
 
     return () => {
-      socket.off("voteUpdate");
-      socket.off("votingStatusChanged");
+      if (socket) {
+        socket.off("voteUpdate");
+        socket.off("votingStatusChanged");
+      }
     };
   }, []);
+
+  const rankedNominees = [...nomineesData].sort(
+    (a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)
+  );
 
   return (
     <>
       <DashNavbar />
+
       <div className="pt-24 flex">
         <Sidebar
           setView={setView}
@@ -133,179 +156,135 @@ const Dashboard = () => {
         />
 
         <div className="flex-1 p-6 bg-gray-100 min-h-screen">
-          {/* DASHBOARD VIEW */}
+
+          {/* ================= DASHBOARD ================= */}
           {view === "dashboard" && (
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Current Nominees</h2>
+            <>
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={() => setView("add")}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Add Nominee
+                </button>
 
                 <button
                   onClick={toggleVoting}
-                  className={`py-2 px-4 rounded-lg font-semibold transition ${
-                    votingActive
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-green-600 text-white hover:bg-green-700"
+                  className={`px-4 py-2 rounded text-white ${
+                    votingActive ? "bg-red-600" : "bg-green-600"
                   }`}
                 >
                   {votingActive ? "Stop Voting" : "Start Voting"}
                 </button>
               </div>
 
-              <p className="text-gray-700 font-medium mb-4">
-                Voting Status:{" "}
-                <span
-                  className={votingActive ? "text-green-600" : "text-red-600"}
-                >
-                  {votingActive ? "ACTIVE" : "STOPPED"}
-                </span>
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rankedNominees.map((nom, index) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {rankedNominees.map((nom, i) => (
                   <div
                     key={nom.id}
-                    className={`relative bg-white rounded-xl shadow p-4 text-center transition-all ${
-                      index === 0 ? "border-4 border-yellow-400 scale-105" : ""
+                    className={`bg-white p-4 rounded shadow ${
+                      i === 0 ? "border-4 border-yellow-400" : ""
                     }`}
                   >
                     <img
-                      src={`${API.defaults.baseURL}${nom.photo}`} // <-- dynamic IP
+                      src={
+                        nom.photo && API.defaults.baseURL
+                          ? `${API.defaults.baseURL}${nom.photo}`
+                          : ""
+                      }
+                      className="h-40 w-full object-contain"
                       alt={nom.name}
-                      className="w-full h-40 object-contain rounded mb-2"
                     />
-
-                    <h3 className="font-bold text-lg">{nom.name}</h3>
-                    <p className="text-gray-500">{nom.dep}</p>
-                    <p className="mt-2 text-lg font-bold text-purple-700">
-                      {votes[nom.id] || 0} votes
+                    <h3 className="font-bold">{nom.name}</h3>
+                    <p>{nom.dep}</p>
+                    <p className="font-bold text-purple-700">
+                      Votes: {votes[nom.id] || 0}
                     </p>
+
+                    <button
+                      onClick={() => {
+                        setSelectedNominee(nom);
+                        setName(nom.name);
+                        setDepartment(nom.dep);
+                        setView("update");
+                      }}
+                      className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      Update
+                    </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           )}
 
-          {/* ADD NOMINEE VIEW */}
+          {/* ================= ADD NOMINEE ================= */}
           {view === "add" && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Add Nominee</h2>
-              <form
-                onSubmit={handleAddNominee}
-                className="space-y-4 max-w-md"
-              >
-                <input
-                  type="text"
-                  placeholder="Name"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Department"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  required
-                />
-                <input
-                  type="file"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  onChange={(e) => setImage(e.target.files[0])}
-                  required
-                />
-
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
-                >
-                  Add Nominee
-                </button>
-              </form>
-            </div>
+            <form onSubmit={handleAddNominee} className="space-y-4 max-w-md">
+              <h2 className="text-xl font-bold">Add Nominee</h2>
+              <input className="w-full border p-2" placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
+              <input className="w-full border p-2" placeholder="Department" value={department} onChange={e => setDepartment(e.target.value)} />
+              <input type="file" onChange={e => setImage(e.target.files[0])} />
+              <button className="bg-green-600 text-white px-4 py-2 rounded">Add</button>
+            </form>
           )}
-          {/* UPDATE NOMINEE */}
+
+          {/* ================= UPDATE NOMINEE ================= */}
           {view === "update" && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Update Nominee</h2>
-              <form
-                onSubmit={handleAddNominee}
-                className="space-y-4 max-w-md"
-              >
-                <input
-                  type="text"
-                  placeholder="Name"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Department"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  required
-                />
-                <input
-                  type="file"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  onChange={(e) => setImage(e.target.files[0])}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Update Nominee
-                </button>
-              </form>
-            </div>
+            <form onSubmit={handleUpdateNominee} className="space-y-4 max-w-md">
+              <h2 className="text-xl font-bold">Update Nominee</h2>
+              <input className="w-full border p-2" value={name} onChange={e => setName(e.target.value)} />
+              <input className="w-full border p-2" value={department} onChange={e => setDepartment(e.target.value)} />
+              <input type="file" onChange={e => setImage(e.target.files[0])} />
+              <button className="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
+            </form>
           )}
-          {/* ADD ADMIN VIEW */}
-          {view === "addAdmin" && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Add Admin</h2>
-              <form
-                onSubmit={handleAddAdmin}
-                className="space-y-4 max-w-md"
-              >
-                <input
-                  type="text"
-                  placeholder="Name"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full px-4 py-2 border rounded-lg"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
 
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
-                >
-                  Add Admin
-                </button>
-              </form>
-            </div>
+          {/* ================= ADD ADMIN ================= */}
+          {view === "addadmin" && (
+            <form onSubmit={handleAddAdmin} className="space-y-4 max-w-md">
+              <h2 className="text-xl font-bold">Add Admin</h2>
+              <input className="w-full border p-2" placeholder="Name" value={admName} onChange={e => setAdmName(e.target.value)} />
+              <input className="w-full border p-2" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+              <input className="w-full border p-2" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+              <button className="bg-green-600 text-white px-4 py-2 rounded">Add Admin</button>
+            </form>
           )}
+
+{/* ================= ADMIN LIST ================= */}
+{view === "admins" && (
+  <div className="max-w-lg">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-2xl font-bold">Admins</h2>
+
+      {/* ✅ FUNCTIONAL ADD ADMIN BUTTON */}
+      <button
+        onClick={() => setView("addadmin")}
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+      >
+        Add Admin
+      </button>
+    </div>
+
+    {admins.length === 0 ? (
+      <p className="text-gray-500">No admins found</p>
+    ) : (
+      <ul className="space-y-3">
+        {admins.map((admin) => (
+          <li
+            key={admin.id}
+            className="bg-white p-4 rounded shadow flex flex-col"
+          >
+            <span className="font-bold">{admin.name}</span>
+            <span className="text-gray-600">{admin.email}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
+
+
         </div>
       </div>
     </>

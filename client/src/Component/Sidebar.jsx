@@ -1,30 +1,53 @@
-import { useState } from "react";
+import React from "react";
 
-const Sidebar = ({ setView, votingActive, setVotingActive }) => {
+const Sidebar = ({
+  setView,
+  votingActive = false,
+  setVotingActive = () => {}
+}) => {
   return (
-    <div className="w-64 bg-white h-screen shadow-lg flex flex-col p-4">
-      <h1 className="text-2xl font-bold text-green-600 mb-6">Admin</h1>
+    <div className="w-64 min-h-screen bg-gray-900 text-white p-4">
+      <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
 
-      <button
-        onClick={() => setView("dashboard")}
-        className="w-full text-left px-4 py-2 mb-2 rounded hover:bg-green-100 transition"
-      >
-        Dashboard
-      </button>
+      <ul className="space-y-3">
+        <li>
+          <button
+            onClick={() => setView("dashboard")}
+            className="w-full text-left px-3 py-2 rounded hover:bg-gray-700"
+          >
+            Dashboard
+          </button>
+        </li>
 
-      <button
-        onClick={() => setView("add")}
-        className="w-full text-left px-4 py-2 mb-2 rounded hover:bg-green-100 transition"
-      >
-        Add Nominee
-      </button>
+        <li>
+          <button
+            onClick={() => setView("add")}
+            className="w-full text-left px-3 py-2 rounded hover:bg-gray-700"
+          >
+            Add Nominee
+          </button>
+        </li>
 
-      <button
-        onClick={() => setView("update")}
-        className="w-full text-left px-4 py-2 mb-2 rounded hover:bg-green-100 transition"
-      >
-        Update Nominee
-      </button>
+        <li>
+          <button
+            onClick={() => setView("admins")}
+            className="w-full text-left px-3 py-2 rounded hover:bg-gray-700"
+          >
+            Admin Management
+          </button>
+        </li>
+
+        <li>
+          <button
+            onClick={() => setVotingActive(!votingActive)}
+            className={`w-full text-left px-3 py-2 rounded ${
+              votingActive ? "bg-red-600" : "bg-green-600"
+            }`}
+          >
+            {votingActive ? "Stop Voting" : "Start Voting"}
+          </button>
+        </li>
+      </ul>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 const voteRouter = require("express").Router();
+const auth = require("../../middleware/auth");
 const { addVote, getVotes, getStatus, toggleStatus, getVoteByDeviceId } = require("./vote.controller");
 
 voteRouter.post("/", addVote); // add vote
