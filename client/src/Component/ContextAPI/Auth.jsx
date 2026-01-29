@@ -1,4 +1,3 @@
-// Component/ContextAPI/Auth.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import API from "../api";
 
@@ -9,31 +8,40 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔁 Restore session on refresh
   useEffect(() => {
-    const fetchUser = async () => {
+    const restoreUser = async () => {
       try {
         const res = await API.get("/api/user/me");
-        setUser(res.data.user);
-      } catch (err) {
+        if (res.data?.success) {
+          setUser(res.data.data);
+        } else {
+          setUser(null);
+        }
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
-    fetchUser();
+
+    restoreUser();
   }, []);
 
-  const logout = async () => {
-    try {
-      await API.post("/api/user/logout");
-      setUser(null);
-    } catch (err) {
-      console.error(err);
-    }
+  const login = async ({ email, password }) => {
+    const res = await API.post("/api/user/login", { email, password });
+    setUser(res.data.data);
+  };
+
+  const logout = async (e) => {
+    await API.post("/api/user/logout");
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser,logout, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, loading, setLoading, setUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

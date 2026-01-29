@@ -3,7 +3,7 @@ import React from "react";
 const Sidebar = ({
   setView,
   votingActive = false,
-  setVotingActive = () => {}
+  toggleVoting = () => {}
 }) => {
   return (
     <div className="w-64 min-h-screen bg-gray-900 text-white p-4">
@@ -37,9 +37,10 @@ const Sidebar = ({
           </button>
         </li>
 
+        {/* ✅ FIXED VOTING BUTTON */}
         <li>
           <button
-            onClick={() => setVotingActive(!votingActive)}
+            onClick={toggleVoting}
             className={`w-full text-left px-3 py-2 rounded ${
               votingActive ? "bg-red-600" : "bg-green-600"
             }`}

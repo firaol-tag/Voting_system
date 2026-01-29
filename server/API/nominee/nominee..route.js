@@ -1,8 +1,7 @@
 
-const { addNominee, getNominees } = require('./nominee.controller');
+const { addNominee, getNominees, updateNominee } = require('./nominee.controller');
 const multer = require('multer');
 const path = require('path');
-const { updateNominee } = require('./nominee..service');
 const auth = require('../../middleware/auth');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

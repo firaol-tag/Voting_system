@@ -6,6 +6,7 @@ import Vote from "./Pages/Vote";
 import Dashboard from "./Pages/Dashboard";
 import Login from "./Pages/Login";
 import { useAuth } from "./Component/ContextAPI/Auth";
+import NomineeRank from "./Pages/NomineeRank";
 
 function App() {
   const { user, loading } = useAuth();
@@ -35,7 +36,13 @@ function App() {
       Math.random().toString(36).substring(2) + Date.now();
     localStorage.setItem("deviceId", deviceId);
   }
-
+ if (loading && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-black">
+        Loading...
+      </div>
+    );
+  }
   return (
     <>
       <Navbar />
@@ -45,18 +52,21 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/vote/:id" element={<Vote />} />
         <Route path="/login" element={<Login />} />
-
+        <Route path="/nomineerank" element={<NomineeRank/>}/>
         {/* Protected */}
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              <Dashboard nominees={nominees} setNominees={setNominees} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+<Route
+  path="/dashboard"
+  element={
+    loading ? (
+      <div className="text-white text-center mt-10">Loading...</div>
+    ) : user ? (
+      <Dashboard nominees={nominees} setNominees={setNominees} />
+    ) : (
+      <Navigate to="/login" replace />
+    )
+  }
+/>
+
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

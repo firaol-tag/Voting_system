@@ -6,25 +6,27 @@ import API from "../Component/api";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser, loading } = useAuth();
+  const { setUser, loading,setLoading,login } = useAuth();
   const navigate = useNavigate();
 
-  const login = async (e) => {
-    e.preventDefault();
-
-    try {
-      const res = await API.post("/api/user/login", { email, password });
-      setUser(res.data.data);
-      navigate("/dashboard");
-    } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
-    }
-  };
+const handleSubmit=async(e)=>{
+  e.preventDefault()
+  setLoading(true)
+  try {
+    await login({email,password})
+    navigate("/dashboard")
+  } catch (error) {
+    console.log("login failed");
+  }
+  finally{
+    setLoading(false)
+  }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
       <form
-        onSubmit={login}
+        onSubmit={handleSubmit}
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
       >
         <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">

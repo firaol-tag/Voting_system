@@ -21,9 +21,9 @@ module.exports={
             return callback(null,results);
         })
     },
-    updateNominee:(data,callback)=>{
+    updatenominee:(data,callback)=>{
         const values=[data.name,data.department,data.nimage,data.id]
-        const sql="UPDATE nominees SET name=?,department=?,nimage=? WHERE id=?"
+        const sql="UPDATE nominee SET name=?,dep=?, photo=? WHERE id=?"
         db.query(sql,values,(err,results)=>{
             if(err){
                 return callback(err);

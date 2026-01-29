@@ -110,6 +110,7 @@ const Dashboard = () => {
   /* ================= VOTING ================= */
 
   const toggleVoting = async () => {
+    console.log("request")
     const res = await API.post("/api/vote/status", {
       active: !votingActive,
     });
@@ -149,12 +150,11 @@ const Dashboard = () => {
       <DashNavbar />
 
       <div className="pt-24 flex">
-        <Sidebar
-          setView={setView}
-          votingActive={votingActive}
-          setVotingActive={setVotingActive}
-        />
-
+<Sidebar
+  setView={setView}
+  votingActive={votingActive}
+  toggleVoting={toggleVoting}
+/>
         <div className="flex-1 p-6 bg-gray-100 min-h-screen">
 
           {/* ================= DASHBOARD ================= */}

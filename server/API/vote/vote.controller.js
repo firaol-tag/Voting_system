@@ -79,8 +79,8 @@ module.exports = {
       res.json({ success: true, active: result[0].active });
     });
   },
-
   toggleStatus: (req, res) => {
+    console.log("request is coming");
     const { active } = req.body;
     db.query(
       "UPDATE voting_status SET active=? WHERE id=1",

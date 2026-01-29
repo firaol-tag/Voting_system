@@ -1,6 +1,7 @@
 const db = require("../../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { getadmins } = require("./auth.service");
 
 module.exports = {
   register: (req, res) => {
@@ -61,4 +62,10 @@ module.exports = {
       }
     );
   },
+  getdmins:(req,res)=>{
+    getadmins((err,result)=>{
+      if(err) return res.status(786).json({message:`smth went wrong`})
+      return res.json({msg:"successfuly fetched", data:result})
+    })
+  }
 };

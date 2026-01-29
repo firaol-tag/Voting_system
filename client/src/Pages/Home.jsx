@@ -30,9 +30,10 @@ const Home = () => {
       const voteMap = {};
       resVotes.data.data.forEach((v) => (voteMap[v.nominee_id] = v.totalVotes));
       setVotes(voteMap);
-
+    
       const resStatus = await axios.get("http://192.168.101.181:3270/api/vote/status");
       setIsVotingActive(resStatus.data.active);
+      console.log(resStatus.data.active);
     } catch (error) {
       console.error("Error fetching votes or status:", error);
     }
@@ -95,8 +96,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-24 px-6">
-      <div className="text-center font-extrabold text-white text-3xl md:text-4xl lg:text-5xl mb-16 mt-6">
-        <h2>Best Dressing Nominee</h2>
+      <div className="text-center font-extrabold text-white text-2xl md:text-4xl lg:text-5xl mb-16 mt-6">
+        <h2>Best Dressing Nominee 2026</h2>
       </div>
 
       <div className="max-w-7xl mx-auto">
