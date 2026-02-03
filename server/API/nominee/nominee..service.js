@@ -31,4 +31,11 @@ module.exports={
             return callback(null,results);
         })
     },
+    deletenominee:(id,callback)=>{
+        const sql="DELETE FROM nominee WHERE id=?"
+        db.query(sql, [id],(err,result)=>{
+            if(err) return callback(err)
+            return callback(null,result)
+        })
+    }
 }

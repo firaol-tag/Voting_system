@@ -60,7 +60,6 @@ module.exports = {
       }
     );
   },
-
   getVotes: (req, res) => {
     const sql = `
       SELECT nominee_id, COUNT(*) AS totalVotes 
@@ -72,10 +71,11 @@ module.exports = {
       res.json({ success: true, data: results });
     });
   },
-
   getStatus: (req, res) => {
     db.query("SELECT active FROM voting_status WHERE id=1", (err, result) => {
-      if (err) return res.status(500).json({ success: false });
+      if (err) {
+        console.log(err)
+        return res.status(500).json({ success: false });}
       res.json({ success: true, active: result[0].active });
     });
   },

@@ -2,9 +2,10 @@ import React from "react";
 
 const Sidebar = ({
   setView,
-  votingActive = false,
+  votingActive,
   toggleVoting = () => {}
 }) => {
+  console.log(votingActive);
   return (
     <div className="w-64 min-h-screen bg-gray-900 text-white p-4">
       <h2 className="text-xl font-bold mb-6">Admin Panel</h2>

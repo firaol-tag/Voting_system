@@ -41,9 +41,22 @@ const Dashboard = () => {
   };
 
   const fetchVotingStatus = async () => {
-    const res = await API.get("/api/voting/status");
-    setVotingActive(res.data.active);
+try {
+        const resStatus = await API.get("/api/vote/status");
+      setVotingActive(resStatus.data.active);
+      console.log(resStatus.data.active);
+} catch (error) {
+  console.log(error);
+}
   };
+const handleDelete = async (id) => {
+  try {
+    await API.delete(`/api/nominee/delete/${id}`);
+    fetchNominees(); // refresh UI
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const fetchAdmins = async () => {
     const res = await API.get("/api/user/get");
@@ -110,7 +123,6 @@ const Dashboard = () => {
   /* ================= VOTING ================= */
 
   const toggleVoting = async () => {
-    console.log("request")
     const res = await API.post("/api/vote/status", {
       active: !votingActive,
     });
@@ -132,7 +144,6 @@ const Dashboard = () => {
         setVotingActive(d.active)
       );
     }
-
     return () => {
       if (socket) {
         socket.off("voteUpdate");
@@ -168,14 +179,14 @@ const Dashboard = () => {
                   Add Nominee
                 </button>
 
-                <button
+                {/* <button
                   onClick={toggleVoting}
                   className={`px-4 py-2 rounded text-white ${
                     votingActive ? "bg-red-600" : "bg-green-600"
                   }`}
                 >
                   {votingActive ? "Stop Voting" : "Start Voting"}
-                </button>
+                </button> */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -200,7 +211,7 @@ const Dashboard = () => {
                     <p className="font-bold text-purple-700">
                       Votes: {votes[nom.id] || 0}
                     </p>
-
+                    <div className="w-full flex justify-between item-center">
                     <button
                       onClick={() => {
                         setSelectedNominee(nom);
@@ -212,6 +223,15 @@ const Dashboard = () => {
                     >
                       Update
                     </button>
+<button
+  onClick={() => handleDelete(nom.id)}
+  className="mt-2 bg-red-600 text-white px-3 py-1 rounded"
+>
+  Delete
+</button>
+
+                    </div>
+
                   </div>
                 ))}
               </div>

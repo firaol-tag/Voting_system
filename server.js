@@ -20,7 +20,6 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 const { Server } = require("socket.io");
 const authRouter = require("./server/API/auth/auth.route");
 const io = new Server(server, {
@@ -35,11 +34,11 @@ global.io = io;
 io.on("connection", (socket) => {
   console.log("🔥 Socket connected:", socket.id);
 });
-
+app.use("/",nomineeRouter)
 app.use("/api/nominee", nomineeRouter);
 app.use("/api/vote", voteRouter);
 app.use("/api/user", authRouter);
 const PORT = 3270;
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running at http://192.168.101.181:${PORT}`);
+  console.log(`Server running at port: ${PORT}`);
 });

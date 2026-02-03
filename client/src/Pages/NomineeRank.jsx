@@ -25,8 +25,9 @@ const NomineeRank = () => {
 
   // Fetch voting status
   const fetchVotingStatus = async () => {
-    const res = await API.get("/api/voting/status");
+    const res = await API.get("/api/vote/status");
     setVotingActive(res.data.active);
+    console.log(res.data.active);
   };
 
   useEffect(() => {

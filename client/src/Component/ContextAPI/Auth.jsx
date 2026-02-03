@@ -7,7 +7,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
+ const url="https://backdressingvote.gpower-et.com"
   // 🔁 Restore session on refresh
   useEffect(() => {
     const restoreUser = async () => {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, loading, setLoading, setUser }}
+      value={{ user, login, logout, loading, url, setLoading, setUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -3,10 +3,12 @@ import NomineeCard from "../Component/NomineeCard";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { useAuth } from "../Component/ContextAPI/Auth";
 
-const socket = io("http://192.168.101.181:3270");
+const socket = io("https://backdressingvote.gpower-et.com");
 
 const Home = () => {
+   const {url}=useAuth()
   const [nomineesData, setNomineesData] = useState([]);
   const [votes, setVotes] = useState({});
   const [isVotingActive, setIsVotingActive] = useState(true);
@@ -16,7 +18,7 @@ const Home = () => {
   // Fetch nominees
   const fetchNominees = async () => {
     try {
-      const res = await axios.get("http://192.168.101.181:3270/api/nominee/get");
+      const res = await axios.get(url+"/api/nominee/get");
       setNomineesData(res.data.data);
     } catch (error) {
       console.error("Error fetching nominees:", error);
@@ -26,12 +28,12 @@ const Home = () => {
   // Fetch votes and voting status
   const fetchVotesAndStatus = async () => {
     try {
-      const resVotes = await axios.get("http://192.168.101.181:3270/api/vote");
+      const resVotes = await axios.get(url +"/api/vote");
       const voteMap = {};
       resVotes.data.data.forEach((v) => (voteMap[v.nominee_id] = v.totalVotes));
       setVotes(voteMap);
     
-      const resStatus = await axios.get("http://192.168.101.181:3270/api/vote/status");
+      const resStatus = await axios.get(url +"/api/vote/status");
       setIsVotingActive(resStatus.data.active);
       console.log(resStatus.data.active);
     } catch (error) {
@@ -42,7 +44,7 @@ const Home = () => {
     try {
       const deviceId = localStorage.getItem("voterDevice");
       if (deviceId) {
-        const res = await axios.get(`http://192.168.101.181:3270/api/vote/device/${deviceId}`);
+        const res = await axios.get(`https://backdressingvote.gpower-et.com/api/vote/device/${deviceId}`);
         setHasVoted(res.data.hasVoted);
       }
     } catch (error) {

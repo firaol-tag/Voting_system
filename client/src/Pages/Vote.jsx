@@ -23,7 +23,7 @@ const Vote = () => {
 
     // Fetch voting status
     axios
-      .get("http://192.168.101.181:3270/api/vote/status")
+      .get("https://backdressingvote.gpower-et.com/api/vote/status")
       .then((res) => setIsVotingActive(res.data.active))
       .catch(() => setIsVotingActive(false));
   }, []);
@@ -35,7 +35,7 @@ const Vote = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://192.168.101.181:3270/api/vote", {
+      const res = await axios.post("https://backdressingvote.gpower-et.com/api/vote", {
         nominee_id: id,
         email,
         device_id: deviceId,

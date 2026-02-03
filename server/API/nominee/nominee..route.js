@@ -1,5 +1,5 @@
 
-const { addNominee, getNominees, updateNominee } = require('./nominee.controller');
+const { addNominee, getNominees, updateNominee, deleteNominee } = require('./nominee.controller');
 const multer = require('multer');
 const path = require('path');
 const auth = require('../../middleware/auth');
@@ -19,4 +19,5 @@ const nomineeRouter = require('express').Router();
 nomineeRouter.post("/add", upload.single('image'), auth, addNominee)
 nomineeRouter.get("/get",getNominees)
 nomineeRouter.put("/update/:id", upload.single('image'),auth,updateNominee)
+nomineeRouter.delete("/delete/:id", deleteNominee)
 module.exports = nomineeRouter;

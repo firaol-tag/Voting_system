@@ -1,7 +1,6 @@
 import axios from "axios";
-
 const API = axios.create({
-  baseURL: "http://192.168.101.181:3270",
+  baseURL: "https://backdressingvote.gpower-et.com",
   withCredentials: true,
 });
 

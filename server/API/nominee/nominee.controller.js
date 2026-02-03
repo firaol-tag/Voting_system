@@ -1,4 +1,4 @@
-const { addnominee, getnominees, updatenominee } = require("./nominee..service");
+const { addnominee, getnominees, updatenominee, deletenominee } = require("./nominee..service");
 
 module.exports = {
   addNominee: (req, res) => {
@@ -33,5 +33,12 @@ module.exports = {
       console.log("successful");
         res.json({ success: true });
     });
+  },
+  deleteNominee:(req, res)=>{
+    const {id}=req.params
+    deletenominee(id,(err)=>{
+      if(err) {return res.status(845).json({success:false,message:"sth went wrong: "+ err})}
+      return res.json({success:true,message:"successfuly deleted"})
+    })
   }
 };

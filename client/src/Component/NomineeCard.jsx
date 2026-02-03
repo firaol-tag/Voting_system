@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
+import { useAuth } from "./ContextAPI/Auth";
 
 const NomineeCard = ({ nominee, votes = 0, rank, onVote, disabled }) => {
+  const {url}=useAuth()
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
       className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl overflow-hidden transition-all"
     >
       <img
-        src={`http://192.168.101.181:3270${nominee.photo}`}
+        src={`${url}${nominee.photo}`}
         alt={nominee.name}
         className="w-full h-56 object-contain"
       />
